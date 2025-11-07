@@ -63,7 +63,6 @@ Namespace Controller – handles creation/deletion of namespaces
 Think of controllers as “loops” that continuously reconcile actual vs. desired states.
 
 4. Scheduler (kube-scheduler)
-
 Decides which node a newly created pod should run on.
 
 Factors considered:
@@ -74,11 +73,9 @@ Pod anti-affinity
 Once scheduled, the decision is recorded in etcd and the Kubelet on that node starts the container.
 
 🧱 B. Node Components (Worker Nodes)
-
 Each worker node runs the actual containerized workloads (Pods).
 
 1. Kubelet
-
 An agent that runs on each node.
 Communicates with the API server to:
 Receive pod specs (Pod manifests)
@@ -88,13 +85,11 @@ Reports back status to the API server.
 If a container dies, Kubelet automatically restarts it based on pod definition.
 
 2. Kube Proxy
-
 Manages networking and service discovery on each node.
 Maintains network rules (iptables or IPVS) to route traffic to appropriate pod IPs.
 Ensures load balancing among pods for a service.
 
 3. Container Runtime
-
 The software that actually runs containers.
 Kubernetes supports multiple runtimes:
 containerd
@@ -103,7 +98,6 @@ Docker (deprecated but still used via shim)
 Kubelet interacts with the runtime using the Container Runtime Interface (CRI).
 
 4. Pods
-
 The smallest deployable unit in Kubernetes.
 A Pod = 1 or more containers that share:
 Network namespace (IP, port space)
@@ -135,26 +129,22 @@ Secret: base64-encoded sensitive data (passwords, tokens, etc.).
 Abstract a set of Pods and expose them via a stable IP and DNS name.
 
 Types:
-
 ClusterIP (default, internal only)
 NodePort (exposed via node’s IP)
 LoadBalancer (external access)
 ExternalName (DNS CNAME)
 
 ⚡ Ingress
-
 Manages HTTP/HTTPS routing into the cluster.
 Works with an Ingress Controller (like NGINX or Traefik).
 
 📡 5. Cluster Communication
-
 API Server ↔ etcd — stores & retrieves cluster state
 API Server ↔ Kubelet — manages pod lifecycles
 Kubelet ↔ Container Runtime — starts/stops containers
 Kube Proxy — routes traffic within cluster
 
 🧮 6. Example Control Flow: Deploying a Pod
-
 User applies a manifest:
 kubectl apply -f nginx-pod.yaml
 
