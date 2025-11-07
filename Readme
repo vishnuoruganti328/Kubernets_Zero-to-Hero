@@ -1,2 +1,274 @@
-1. What Is Kubernetes?
-Kubernetes (K8s) is an open-source container orchestration platform that automates:Deployment ,Scaling, Load balancing, Management, Self-healing of containerized applications.
+🧠 Kubernetes (K8s) Architecture — Detailed Notes
+🌍 1. Overview
+
+Kubernetes is an open-source container orchestration platform designed to automate deployment, scaling, and management of containerized applications.
+
+It follows a master-worker (control plane – node) architecture, managing a cluster of nodes that run applications inside containers (usually Docker or containerd).
+
+🧩 2. High-Level Architecture
++--------------------------------------------------------------+
+|                        Kubernetes Cluster                    |
+|                                                              |
+|   +--------------------+        +--------------------+       |
+|   | Control Plane      |        | Worker Nodes       |       |
+|   | (Master Node)      |        | (Minions)          |       |
+|   +--------------------+        +--------------------+       |
+|   | - API Server       |        | - Kubelet          |       |
+|   | - etcd             |        | - Kube Proxy       |       |
+|   | - Controller Mgr   |        | - Container Runtime|       |
+|   | - Scheduler        |        | - Pods             |       |
+|   +--------------------+        +--------------------+       |
++--------------------------------------------------------------+
+
+⚙️ 3. Key Components of Kubernetes Architecture
+🧭 A. Control Plane Components (Master Node)
+
+The control plane manages the cluster’s overall state — deciding what runs where, monitoring health, and responding to cluster events.
+
+1. API Server (kube-apiserver)
+
+Acts as the front door to the Kubernetes control plane.
+
+Exposes RESTful APIs used by kubectl, other components, and external clients.
+
+All communication within the cluster goes through the API server.
+
+Performs:
+
+Authentication & authorization
+
+Request validation
+
+Object persistence (talks to etcd)
+
+Command example:
+
+kubectl get pods --all-namespaces
+
+
+→ The request hits the API server, which reads from etcd and returns results.
+
+2. etcd
+
+A distributed, key-value store used as Kubernetes’ single source of truth.
+
+Stores all cluster data: nodes, pods, configs, secrets, etc.
+
+Designed for high availability, consistency, and reliability.
+
+Backup and recovery of etcd = backup and recovery of your cluster state.
+
+Example data stored in etcd:
+
+/api/v1/pods/default/nginx-pod
+/api/v1/nodes/node1
+
+3. Controller Manager (kube-controller-manager)
+
+Runs controllers, which are background processes that regulate the cluster’s state.
+
+Each controller watches the cluster state via the API server and makes changes to move the current state closer to the desired state.
+
+Key controllers:
+
+Node Controller – detects node failures
+
+Replication Controller – ensures the correct number of pod replicas
+
+Endpoints Controller – manages Service endpoints
+
+Namespace Controller – handles creation/deletion of namespaces
+
+Think of controllers as “loops” that continuously reconcile actual vs. desired states.
+
+4. Scheduler (kube-scheduler)
+
+Decides which node a newly created pod should run on.
+
+Factors considered:
+
+Resource requirements (CPU, memory)
+
+Node affinity/taints
+
+Workload balancing
+
+Pod anti-affinity
+
+Once scheduled, the decision is recorded in etcd and the Kubelet on that node starts the container.
+
+🧱 B. Node Components (Worker Nodes)
+
+Each worker node runs the actual containerized workloads (Pods).
+
+1. Kubelet
+
+An agent that runs on each node.
+
+Communicates with the API server to:
+
+Receive pod specs (Pod manifests)
+
+Ensure containers are running as defined
+
+Monitors the node’s health and resource usage.
+
+Reports back status to the API server.
+
+If a container dies, Kubelet automatically restarts it based on pod definition.
+
+2. Kube Proxy
+
+Manages networking and service discovery on each node.
+
+Maintains network rules (iptables or IPVS) to route traffic to appropriate pod IPs.
+
+Ensures load balancing among pods for a service.
+
+3. Container Runtime
+
+The software that actually runs containers.
+
+Kubernetes supports multiple runtimes:
+
+containerd
+
+CRI-O
+
+Docker (deprecated but still used via shim)
+
+Kubelet interacts with the runtime using the Container Runtime Interface (CRI).
+
+4. Pods
+
+The smallest deployable unit in Kubernetes.
+
+A Pod = 1 or more containers that share:
+
+Network namespace (IP, port space)
+
+Storage volumes
+
+Lifecycle
+
+Example:
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+
+🧩 4. Supporting Components
+🧠 Namespaces
+
+Logical partitions within a cluster.
+
+Used for multi-tenancy, resource isolation, or organization.
+
+🔒 ConfigMaps & Secrets
+
+Store configuration data separately from code.
+
+ConfigMap: non-sensitive key-value pairs.
+
+Secret: base64-encoded sensitive data (passwords, tokens, etc.).
+
+🧮 Services
+
+Abstract a set of Pods and expose them via a stable IP and DNS name.
+
+Types:
+
+ClusterIP (default, internal only)
+
+NodePort (exposed via node’s IP)
+
+LoadBalancer (external access)
+
+ExternalName (DNS CNAME)
+
+⚡ Ingress
+
+Manages HTTP/HTTPS routing into the cluster.
+
+Works with an Ingress Controller (like NGINX or Traefik).
+
+📡 5. Cluster Communication
+
+API Server ↔ etcd — stores & retrieves cluster state
+
+API Server ↔ Kubelet — manages pod lifecycles
+
+Kubelet ↔ Container Runtime — starts/stops containers
+
+Kube Proxy — routes traffic within cluster
+
+🧮 6. Example Control Flow: Deploying a Pod
+
+User applies a manifest:
+
+kubectl apply -f nginx-pod.yaml
+
+
+kubectl → sends request to API Server
+
+API Server → stores desired state in etcd
+
+Scheduler → picks a suitable node
+
+Kubelet (on that node) → pulls image, runs container
+
+Kube Proxy → sets up networking so the Pod is reachable
+
+System continuously monitors & reconciles state
+
+🧰 7. Add-ons and Ecosystem Components
+
+DNS (CoreDNS): internal service discovery
+
+Metrics Server: collects cluster-wide metrics
+
+Dashboard: web UI for cluster management
+
+Network Plugins (CNI): e.g., Calico, Flannel, Cilium
+
+Storage Plugins (CSI): manage persistent volumes
+
+🧱 8. Cluster Types
+
+Single-node cluster – for testing (Minikube, Kind, k3s)
+
+Multi-node cluster – production setup
+
+Managed clusters – e.g. GKE, EKS, AKS
+
+🧭 9. Summary Diagram
+Control Plane (Master)
+  ├── API Server <----> etcd
+  ├── Scheduler
+  └── Controller Manager
+         ↑
+         │
+         │   (communicates via API)
+         ↓
+Worker Nodes
+  ├── Kubelet
+  ├── Kube Proxy
+  ├── Container Runtime
+  └── Pods
+
+🔑 10. Key Concepts to Remember
+Concept	Description
+Pod	Smallest deployable unit
+Node	Machine (VM or physical) that runs Pods
+Control Plane	Cluster brain – makes global decisions
+Service	Stable endpoint for Pod groups
+etcd	Cluster state database
+Kubelet	Node-level agent
+Kube Proxy	Handles networking & load balancing
+Scheduler	Assigns Pods to Nodes
+Controller Manager	Enforces desired cluster state
